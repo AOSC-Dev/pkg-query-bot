@@ -10,6 +10,7 @@ use teloxide::{prelude::*, types::ParseMode, utils::command::BotCommands};
     description = "Bot supports the following commands:"
 )]
 enum Cmd {
+    Help,
     #[command(description = "query a package (e,g: /query oma)")]
     Pkg(String),
 }
@@ -74,6 +75,10 @@ async fn answer(bot: Bot, msg: Message, cmd: Cmd) -> ResponseResult<()> {
 
             bot.send_message(msg.chat.id, pkg.to_string())
                 .parse_mode(ParseMode::Html)
+                .await?;
+        }
+        Cmd::Help => {
+            bot.send_message(msg.chat.id, Cmd::descriptions().to_string())
                 .await?;
         }
     }
