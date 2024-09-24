@@ -58,16 +58,33 @@ struct Meta {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
     let bot = Bot::from_env();
-    Cmd::repl(bot, answer).await;
+    let client = Client::builder().user_agent("bot").build()?;
+
+    let handler =
+        Update::filter_message().branch(dptree::entry().filter_command::<Cmd>().endpoint(
+            |bot: Bot, msg: Message, cmd: Cmd, client: Client| async move {
+                answer(bot, msg, cmd, client).await
+            },
+        ));
+
+    Dispatcher::builder(bot.clone(), handler)
+        // Pass the shared state to the handler as a dependency.
+        .dependencies(dptree::deps![client])
+        .enable_ctrlc_handler()
+        .build()
+        .dispatch()
+        .await;
+
+    Ok(())
 }
 
-async fn answer(bot: Bot, msg: Message, cmd: Cmd) -> ResponseResult<()> {
+async fn answer(bot: Bot, msg: Message, cmd: Cmd, client: Client) -> ResponseResult<()> {
     match cmd {
         Cmd::Pkg(arg) => {
-            let pkg = match get_pkg(&arg).await {
+            let pkg = match get_pkg(&client, &arg).await {
                 Ok(pkg) => pkg,
                 Err(e) => {
                     bot.send_message(msg.chat.id, e.to_string()).await?;
@@ -88,8 +105,7 @@ async fn answer(bot: Bot, msg: Message, cmd: Cmd) -> ResponseResult<()> {
     Ok(())
 }
 
-async fn get_pkg(name: &str) -> anyhow::Result<Pkg> {
-    let client = Client::builder().user_agent("bot").build()?;
+async fn get_pkg(client: &Client, name: &str) -> anyhow::Result<Pkg> {
     Ok(client
         .get(format!(
             "https://packages.aosc.io/packages/{}?type=json",
