@@ -33,7 +33,7 @@ impl Display for Pkg {
                     if m.version.is_empty() {
                         continue;
                     }
-                    writeln!(f, "  <b>{}</b>: {}", v.repo, m.version)?;
+                    writeln!(f, "  <b>{}</b>: <code>{}</code>", v.repo, m.version)?;
                     break;
                 }
             }
