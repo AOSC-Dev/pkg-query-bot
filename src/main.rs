@@ -21,7 +21,9 @@ enum Cmd {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
+    tracing_subscriber::fmt::init();
     let bot = Bot::from_env();
+
     let client = Arc::new(PackageSiteClient::new(
         "https://packages.aosc.io".to_string(),
     )?);
