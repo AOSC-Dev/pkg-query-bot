@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use reqwest::Client;
 use serde::Deserialize;
-use teloxide::{prelude::*, utils::command::BotCommands};
+use teloxide::{prelude::*, types::ParseMode, utils::command::BotCommands};
 
 #[derive(BotCommands, Clone, Debug)]
 #[command(
@@ -11,28 +11,30 @@ use teloxide::{prelude::*, utils::command::BotCommands};
 )]
 enum Cmd {
     #[command(description = "query a package (e,g: /query oma)")]
-    Query(String),
+    Pkg(String),
 }
 
 #[derive(Debug, Deserialize)]
 struct Pkg {
     name: String,
-    version: String,
     description: String,
-    versions: Vec<Version>,
+    version_matrix: Vec<Version>,
 }
 
 impl Display for Pkg {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "<b>{}</b>", self.name)?;
         writeln!(f, "<b>description</b>: {}", self.description)?;
-        writeln!(f, "<b>Versions</b>:")?;
-        for ver in &self.versions {
-            write!(f, "  {}", ver)?;
-            if ver.to_string() == self.version {
-                writeln!(f, "(newest)")?;
-            } else {
-                writeln!(f)?;
+
+        for v in &self.version_matrix {
+            for m in &v.meta {
+                if m.hasmeta {
+                    if m.version.is_empty() {
+                        continue;
+                    }
+                    writeln!(f, "  <b>{}</b>: {}", v.repo, m.version)?;
+                    break;
+                }
             }
         }
 
@@ -42,16 +44,14 @@ impl Display for Pkg {
 
 #[derive(Debug, Deserialize)]
 struct Version {
-    version: String,
-    url: String,
+    repo: String,
+    meta: Vec<Meta>,
 }
 
-impl Display for Version {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "<a href=\"{}\">{}</a>", self.url, self.version)?;
-
-        Ok(())
-    }
+#[derive(Debug, Deserialize)]
+struct Meta {
+    hasmeta: bool,
+    version: String,
 }
 
 #[tokio::main]
@@ -63,7 +63,7 @@ async fn main() {
 
 async fn answer(bot: Bot, msg: Message, cmd: Cmd) -> ResponseResult<()> {
     match cmd {
-        Cmd::Query(arg) => {
+        Cmd::Pkg(arg) => {
             let pkg = match get_pkg(&arg).await {
                 Ok(pkg) => pkg,
                 Err(e) => {
@@ -72,7 +72,9 @@ async fn answer(bot: Bot, msg: Message, cmd: Cmd) -> ResponseResult<()> {
                 }
             };
 
-            bot.send_message(msg.chat.id, pkg.to_string()).await?;
+            bot.send_message(msg.chat.id, pkg.to_string())
+                .parse_mode(ParseMode::Html)
+                .await?;
         }
     }
 
