@@ -11,7 +11,7 @@ use teloxide::{prelude::*, types::ParseMode, utils::command::BotCommands};
 )]
 enum Cmd {
     Help,
-    #[command(description = "query a package (e,g: /query oma)")]
+    #[command(description = "Get a package infomation (e,g: /pkg oma)")]
     Pkg(String),
 }
 
