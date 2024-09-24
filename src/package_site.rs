@@ -52,7 +52,6 @@ pub struct SearchResult {
 
 #[derive(Debug, Deserialize)]
 pub struct SearchPackage {
-    name_highlight: String,
     name: String,
 }
 
@@ -62,11 +61,17 @@ impl SearchResult {
         for (idx, pkg) in self.packages.iter().enumerate() {
             if idx > 10 {
                 s.push('\n');
-                s.push_str(&format!("For more results check out: https://packages.aosc.io/search?q={}", search));
+                s.push_str(&format!(
+                    "For more results <a href=\"https://packages.aosc.io/search?q={}\">check out</a>",
+                    search
+                ));
                 break;
             }
 
-            s.push_str(&format!("{}: https://packages.aosc.io/packages/{}", pkg.name_highlight, pkg.name));
+            s.push_str(&format!(
+                "<a href=\"https://packages.aosc.io/packages/{}\">{}</a>",
+                pkg.name, pkg.name
+            ));
             s.push('\n');
         }
 
@@ -101,7 +106,10 @@ impl PackageSiteClient {
     pub async fn search(&self, name: &str) -> anyhow::Result<SearchResult> {
         let resp = self
             .client
-            .get(format!("{}/search?q={}&type=json&noredir=true", self.url, name))
+            .get(format!(
+                "{}/search?q={}&type=json&noredir=true",
+                self.url, name
+            ))
             .send()
             .await?
             .error_for_status()?;
