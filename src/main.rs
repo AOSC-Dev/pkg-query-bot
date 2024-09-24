@@ -25,17 +25,19 @@ struct Pkg {
 impl Display for Pkg {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "<b>{}</b>", self.name)?;
-        writeln!(f, "<b>description</b>: {}", self.description)?;
+        writeln!(f)?;
+        writeln!(f, "{}", self.description)?;
+        writeln!(f)?;
 
         for v in &self.version_matrix {
             for m in &v.meta {
-                if m.hasmeta {
-                    if m.version.is_empty() {
-                        continue;
-                    }
-                    writeln!(f, "  <b>{}</b>: <code>{}</code>", v.repo, m.version)?;
-                    break;
+                if !m.hasmeta || m.version.is_empty() {
+                    continue;
                 }
+
+                writeln!(f, "<b>{}</b>: <code>{}</code>", v.repo, m.version)?;
+
+                break;
             }
         }
 
