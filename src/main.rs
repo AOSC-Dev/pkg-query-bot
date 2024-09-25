@@ -101,6 +101,7 @@ async fn answer(
             if result.is_empty() {
                 bot.send_message(msg.chat.id, format!("No matching package for <b>{}</b>\n\nDidn't find what you need? <a href=\"https://github.com/AOSC-Dev/aosc-os-abbs/issues/new?title=pakreq%3A%20{}&body=URL%3A%20%0A%0ADescription%3A%20\">Request for the package</a>", arg, arg))
                     .parse_mode(ParseMode::Html)
+                    .disable_web_page_preview(true)
                     .await?;
                 return Ok(());
             }
