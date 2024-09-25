@@ -62,7 +62,7 @@ impl SearchResult {
             if idx > 10 {
                 s.push('\n');
                 s.push_str(&format!(
-                    "For more results <a href=\"https://packages.aosc.io/search?q={}\">check out</a>",
+                    "For more results, check out <a href=\"https://packages.aosc.io/search?q={}\">packages.aosc.io</a>",
                     search
                 ));
                 break;
