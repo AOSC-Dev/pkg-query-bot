@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use package_site::PackageSiteClient;
+use reqwest::StatusCode;
 use teloxide::{prelude::*, types::ParseMode, utils::command::BotCommands};
 
 mod package_site;
@@ -54,10 +55,21 @@ async fn answer(
 ) -> ResponseResult<()> {
     match cmd {
         Cmd::Pkg(arg) => {
+            if arg.trim().is_empty() {
+                return Ok(());
+            }
+
             let pkg = match client.get_package(&arg).await {
                 Ok(pkg) => pkg,
                 Err(e) => {
-                    bot.send_message(msg.chat.id, e.to_string()).await?;
+                    if e.status().is_some_and(|x| x == StatusCode::NOT_FOUND) {
+                        bot.send_message(msg.chat.id, format!("<b>{}</b> not found", arg))
+                            .await?;
+                        return Ok(());
+                    }
+
+                    bot.send_message(msg.chat.id, e.without_url().to_string())
+                        .await?;
                     return Ok(());
                 }
             };
@@ -71,13 +83,23 @@ async fn answer(
                 .await?;
         }
         Cmd::Search(arg) => {
+            if arg.trim().is_empty() {
+                return Ok(());
+            }
+
             let result = match client.search(&arg).await {
                 Ok(res) => res,
                 Err(e) => {
-                    bot.send_message(msg.chat.id, e.to_string()).await?;
+                    bot.send_message(msg.chat.id, e.without_url().to_string())
+                        .await?;
                     return Ok(());
                 }
             };
+
+            if result.is_empty() {
+                bot.send_message(msg.chat.id, format!("{arg} has no any results"))
+                    .await?;
+            }
 
             bot.send_message(msg.chat.id, result.fmt_result(&arg))
                 .parse_mode(ParseMode::Html)

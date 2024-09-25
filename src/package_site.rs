@@ -81,6 +81,10 @@ impl SearchResult {
 
         s
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.packages.is_empty()
+    }
 }
 
 pub struct PackageSiteClient {
@@ -96,18 +100,17 @@ impl PackageSiteClient {
         })
     }
 
-    pub async fn get_package(&self, name: &str) -> anyhow::Result<Pkg> {
-        Ok(self
-            .client
+    pub async fn get_package(&self, name: &str) -> reqwest::Result<Pkg> {
+        self.client
             .get(format!("{}/packages/{}?type=json", self.url, name))
             .send()
             .await?
             .error_for_status()?
             .json::<Pkg>()
-            .await?)
+            .await
     }
 
-    pub async fn search(&self, name: &str) -> anyhow::Result<SearchResult> {
+    pub async fn search(&self, name: &str) -> reqwest::Result<SearchResult> {
         let resp = self
             .client
             .get(format!(
@@ -118,6 +121,6 @@ impl PackageSiteClient {
             .await?
             .error_for_status()?;
 
-        Ok(resp.json::<SearchResult>().await?)
+        resp.json::<SearchResult>().await
     }
 }
