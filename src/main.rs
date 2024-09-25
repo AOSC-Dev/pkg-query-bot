@@ -64,6 +64,7 @@ async fn answer(
                 Err(e) => {
                     if e.status().is_some_and(|x| x == StatusCode::NOT_FOUND) {
                         bot.send_message(msg.chat.id, format!("<b>{}</b> not found", arg))
+                            .parse_mode(ParseMode::Html)
                             .await?;
                         return Ok(());
                     }
