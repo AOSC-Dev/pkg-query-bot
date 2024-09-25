@@ -98,6 +98,7 @@ async fn answer(
 
             if result.is_empty() {
                 bot.send_message(msg.chat.id, format!("<b>{arg}</b> has no any results"))
+                    .parse_mode(ParseMode::Html)
                     .await?;
                 return Ok(());
             }
