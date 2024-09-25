@@ -59,7 +59,7 @@ impl SearchResult {
     pub fn fmt_result(&self, search: &str) -> String {
         let mut s = String::new();
         s.push_str(&format!(
-            "Found {} matching package(s):\n\n",
+            "<b>Found {} matching package(s)</b>:\n\n",
             self.packages.len()
         ));
         for (idx, pkg) in self.packages.iter().enumerate() {
