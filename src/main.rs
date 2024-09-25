@@ -97,8 +97,9 @@ async fn answer(
             };
 
             if result.is_empty() {
-                bot.send_message(msg.chat.id, format!("{arg} has no any results"))
+                bot.send_message(msg.chat.id, format!("<b>{arg}</b> has no any results"))
                     .await?;
+                return Ok(());
             }
 
             bot.send_message(msg.chat.id, result.fmt_result(&arg))
