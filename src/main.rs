@@ -63,7 +63,7 @@ async fn answer(
                 Ok(pkg) => pkg,
                 Err(e) => {
                     if e.status().is_some_and(|x| x == StatusCode::NOT_FOUND) {
-                        bot.send_message(msg.chat.id, format!("<b>{}</b> not found", arg))
+                        bot.send_message(msg.chat.id, format!("Package <b>{}</b> not found\n\nDidn't find what you need? <a href=\"https://github.com/AOSC-Dev/aosc-os-abbs/issues/new?title=pakreq%3A%20{}&body=URL%3A%20%0A%0ADescription%3A%20\">Request for the package</a>", arg, arg))
                             .parse_mode(ParseMode::Html)
                             .await?;
                         return Ok(());
