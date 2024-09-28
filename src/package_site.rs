@@ -93,6 +93,10 @@ pub struct PackageSiteClient {
 }
 
 impl PackageSiteClient {
+    pub fn from_env() -> anyhow::Result<Self> {
+        Self::new(std::env::var("PACKAGE_SITE_URL")?)
+    }
+
     pub fn new(url: String) -> anyhow::Result<Self> {
         Ok(Self {
             url,

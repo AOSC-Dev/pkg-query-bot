@@ -25,9 +25,7 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
     let bot = Bot::from_env();
 
-    let client = Arc::new(PackageSiteClient::new(
-        "https://packages.aosc.io".to_string(),
-    )?);
+    let client = Arc::new(PackageSiteClient::from_env()?);
 
     let handler =
         Update::filter_message().branch(dptree::entry().filter_command::<Cmd>().endpoint(
