@@ -56,7 +56,7 @@ pub struct SearchPackage {
 }
 
 impl SearchResult {
-    pub fn fmt_result(&self, search: &str) -> String {
+    pub fn fmt_result(&self, search: &str, pacakge_site_url: &str) -> String {
         let mut s = String::new();
         s.push_str(&format!(
             "<b>Found {} matching package(s)</b>:\n\n",
@@ -66,15 +66,16 @@ impl SearchResult {
             if idx > 10 {
                 s.push('\n');
                 s.push_str(&format!(
-                    "For more results, check out <a href=\"https://packages.aosc.io/search?q={}&noredir=true\">packages.aosc.io</a>",
+                    "For more results, check out <a href=\"{}/search?q={}&noredir=true\">packages.aosc.io</a>",
+                    pacakge_site_url,
                     search
                 ));
                 break;
             }
 
             s.push_str(&format!(
-                "<a href=\"https://packages.aosc.io/packages/{}\">{}</a>",
-                pkg.name, pkg.name
+                "<a href=\"{}/packages/{}\">{}</a>",
+                pacakge_site_url, pkg.name, pkg.name
             ));
             s.push('\n');
         }
@@ -88,20 +89,23 @@ impl SearchResult {
 }
 
 pub struct PackageSiteClient {
-    url: String,
+    pub url: String,
     client: Client,
 }
 
 impl PackageSiteClient {
-    pub fn from_env() -> anyhow::Result<Self> {
-        Self::new(std::env::var("PACKAGE_SITE_URL")?)
+    pub fn from_env() -> Self {
+        Self::new(std::env::var("PACKAGE_SITE_URL").expect("PACKAGE_SITE_URL var is not set"))
     }
 
-    pub fn new(url: String) -> anyhow::Result<Self> {
-        Ok(Self {
+    pub fn new(url: String) -> Self {
+        Self {
             url,
-            client: Client::builder().user_agent("bot").build()?,
-        })
+            client: Client::builder()
+                .user_agent("bot")
+                .build()
+                .expect("Failed to create client"),
+        }
     }
 
     pub async fn get_package(&self, name: &str) -> reqwest::Result<Pkg> {

@@ -27,12 +27,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "anyhow"
-version = "1.0.89"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86fdf8605db99b54d3cd748a44c6d04df638eb5dafb219b135d0149bd0db01f6"
-
-[[package]]
 name = "aquamarine"
 version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -921,7 +915,6 @@ checksum = "953ec861398dccce10c670dfeaf3ec4911ca479e9c02154b3a215178c5f566f2"
 name = "pkg-query-bot"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "dotenvy",
  "reqwest 0.12.7",
  "serde",

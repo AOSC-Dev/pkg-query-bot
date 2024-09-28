@@ -2,7 +2,15 @@ use std::sync::Arc;
 
 use package_site::PackageSiteClient;
 use reqwest::StatusCode;
-use teloxide::{prelude::*, types::ParseMode, utils::command::BotCommands};
+use teloxide::{
+    dispatching::{HandlerExt, UpdateFilterExt},
+    dptree,
+    payloads::SendMessageSetters,
+    prelude::{Dispatcher, Requester, ResponseResult},
+    types::{Message, ParseMode, Update},
+    utils::command::BotCommands,
+    Bot,
+};
 
 mod package_site;
 
@@ -20,12 +28,11 @@ enum Cmd {
 }
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() {
     dotenvy::dotenv().ok();
     tracing_subscriber::fmt::init();
     let bot = Bot::from_env();
-
-    let client = Arc::new(PackageSiteClient::from_env()?);
+    let client = Arc::new(PackageSiteClient::from_env());
 
     let handler =
         Update::filter_message().branch(dptree::entry().filter_command::<Cmd>().endpoint(
@@ -41,8 +48,6 @@ async fn main() -> anyhow::Result<()> {
         .build()
         .dispatch()
         .await;
-
-    Ok(())
 }
 
 async fn answer(
@@ -104,8 +109,9 @@ async fn answer(
                 return Ok(());
             }
 
-            bot.send_message(msg.chat.id, result.fmt_result(&arg))
+            bot.send_message(msg.chat.id, result.fmt_result(&arg, &client.url))
                 .parse_mode(ParseMode::Html)
+                .disable_web_page_preview(true)
                 .await?;
         }
     }
