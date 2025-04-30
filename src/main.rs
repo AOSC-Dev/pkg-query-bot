@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use package_site::PackageSiteClient;
-use reqwest::StatusCode;
+use package_site::{Pkg, SearchResult};
+use pkgsite_lib::{PackagesSiteClient, SearchExactMatch};
 use teloxide::{
     Bot,
     dispatching::{HandlerExt, UpdateFilterExt},
@@ -33,11 +33,11 @@ async fn main() {
     dotenvy::dotenv().ok();
     tracing_subscriber::fmt::init();
     let bot = Bot::from_env();
-    let client = Arc::new(PackageSiteClient::from_env());
+    let client = Arc::new(PackagesSiteClient::from_env());
 
     let handler =
         Update::filter_message().branch(dptree::entry().filter_command::<Cmd>().endpoint(
-            |bot: Bot, msg: Message, cmd: Cmd, client: Arc<PackageSiteClient>| async move {
+            |bot: Bot, msg: Message, cmd: Cmd, client: Arc<PackagesSiteClient>| async move {
                 answer(bot, msg, cmd, client).await
             },
         ));
@@ -55,7 +55,7 @@ async fn answer(
     bot: Bot,
     msg: Message,
     cmd: Cmd,
-    client: Arc<PackageSiteClient>,
+    client: Arc<PackagesSiteClient>,
 ) -> ResponseResult<()> {
     match cmd {
         Cmd::Pkg(arg) => {
@@ -63,19 +63,18 @@ async fn answer(
                 return Ok(());
             }
 
-            let pkg = match client.get_package(&arg).await {
-                Ok(pkg) => pkg,
-                Err(e) => {
-                    if e.status().is_some_and(|x| x == StatusCode::NOT_FOUND) {
-                        bot.send_message(msg.chat.id, format!("Package <b>{}</b> not found\n\nDidn't find what you need? <a href=\"https://github.com/AOSC-Dev/aosc-os-abbs/issues/new?title=pakreq%3A%20{}&body=URL%3A%20%0A%0ADescription%3A%20\">Request for the package</a>", arg, arg))
+            let info = client.info(&[&arg]).await;
+            let pkg = match info.as_deref() {
+                Ok([pkg, ..]) => Pkg::from(pkg),
+                Ok([]) => {
+                    bot.send_message(msg.chat.id, format!("Package <b>{}</b> not found\n\nDidn't find what you need? <a href=\"https://github.com/AOSC-Dev/aosc-os-abbs/issues/new?title=pakreq%3A%20{}&body=URL%3A%20%0A%0ADescription%3A%20\">Request for the package</a>", arg, arg))
                             .parse_mode(ParseMode::Html)
                             .disable_link_preview(true)
                             .await?;
-                        return Ok(());
-                    }
-
-                    bot.send_message(msg.chat.id, e.without_url().to_string())
-                        .await?;
+                    return Ok(());
+                }
+                Err(e) => {
+                    bot.send_message(msg.chat.id, e.to_string()).await?;
                     return Ok(());
                 }
             };
@@ -93,13 +92,14 @@ async fn answer(
                 return Ok(());
             }
 
-            let result = match client.search(&arg).await {
-                Ok(res) => res,
+            let search = client.search(&arg, true).await;
+            let result = match search {
+                Ok(SearchExactMatch::Search(ref res)) => SearchResult::from(res),
                 Err(e) => {
-                    bot.send_message(msg.chat.id, e.without_url().to_string())
-                        .await?;
+                    bot.send_message(msg.chat.id, e.to_string()).await?;
                     return Ok(());
                 }
+                _ => unreachable!(), // redirect is off
             };
 
             if result.is_empty() {

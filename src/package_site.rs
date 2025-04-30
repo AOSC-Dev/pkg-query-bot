@@ -1,23 +1,25 @@
 use std::fmt::Display;
 
-use reqwest::Client;
-use serde::Deserialize;
+use pkgsite_lib::{info::Info, search::Search};
 
-#[derive(Debug, Deserialize)]
-pub struct Pkg {
-    name: String,
-    description: String,
-    version_matrix: Vec<Version>,
+pub struct Pkg<'a> {
+    inner: &'a Info,
 }
 
-impl Display for Pkg {
+impl<'a> From<&'a Info> for Pkg<'a> {
+    fn from(inner: &'a Info) -> Self {
+        Self { inner }
+    }
+}
+
+impl Display for Pkg<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "<b>{}</b>", self.name)?;
+        writeln!(f, "<b>{}</b>", self.inner.name)?;
         writeln!(f)?;
-        writeln!(f, "{}", self.description)?;
+        writeln!(f, "{}", self.inner.description)?;
         writeln!(f)?;
 
-        for v in &self.version_matrix {
+        for v in &self.inner.version_matrix {
             for m in &v.meta {
                 if !m.hasmeta || m.version.is_empty() {
                     continue;
@@ -33,36 +35,24 @@ impl Display for Pkg {
     }
 }
 
-#[derive(Debug, Deserialize)]
-pub struct Version {
-    repo: String,
-    meta: Vec<Meta>,
+pub struct SearchResult<'a> {
+    inner: &'a Search,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct Meta {
-    hasmeta: bool,
-    version: String,
+impl<'a> From<&'a Search> for SearchResult<'a> {
+    fn from(inner: &'a Search) -> Self {
+        Self { inner }
+    }
 }
 
-#[derive(Debug, Deserialize)]
-pub struct SearchResult {
-    packages: Vec<SearchPackage>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct SearchPackage {
-    name: String,
-}
-
-impl SearchResult {
+impl SearchResult<'_> {
     pub fn fmt_result(&self, search: &str, pacakge_site_url: &str) -> String {
         let mut s = String::new();
         s.push_str(&format!(
             "<b>Found {} matching package(s)</b>:\n\n",
-            self.packages.len()
+            self.inner.packages.len()
         ));
-        for (idx, pkg) in self.packages.iter().enumerate() {
+        for (idx, pkg) in self.inner.packages.iter().enumerate() {
             if idx > 10 {
                 s.push('\n');
                 s.push_str(&format!(
@@ -84,51 +74,6 @@ impl SearchResult {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.packages.is_empty()
-    }
-}
-
-pub struct PackageSiteClient {
-    pub url: String,
-    client: Client,
-}
-
-impl PackageSiteClient {
-    pub fn from_env() -> Self {
-        Self::new(std::env::var("PACKAGE_SITE_URL").expect("PACKAGE_SITE_URL var is not set"))
-    }
-
-    pub fn new(url: String) -> Self {
-        Self {
-            url,
-            client: Client::builder()
-                .user_agent("bot")
-                .build()
-                .expect("Failed to create client"),
-        }
-    }
-
-    pub async fn get_package(&self, name: &str) -> reqwest::Result<Pkg> {
-        self.client
-            .get(format!("{}/packages/{}?type=json", self.url, name))
-            .send()
-            .await?
-            .error_for_status()?
-            .json::<Pkg>()
-            .await
-    }
-
-    pub async fn search(&self, name: &str) -> reqwest::Result<SearchResult> {
-        let resp = self
-            .client
-            .get(format!(
-                "{}/search?q={}&type=json&noredir=true",
-                self.url, name
-            ))
-            .send()
-            .await?
-            .error_for_status()?;
-
-        resp.json::<SearchResult>().await
+        self.inner.packages.is_empty()
     }
 }
