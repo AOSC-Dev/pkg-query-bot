@@ -1077,11 +1077,20 @@ name = "pkg-query-bot"
 version = "0.1.0"
 dependencies = [
  "dotenvy",
- "reqwest",
- "serde",
+ "pkgsite-lib",
  "teloxide",
  "tokio",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "pkgsite-lib"
+version = "0.6.2"
+source = "git+https://github.com/AOSC-Dev/pkgsite-tools?tag=pkgsite-lib-v0.6.2#833a362096fba1f366812bf29ce6e21796548d00"
+dependencies = [
+ "reqwest",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]
