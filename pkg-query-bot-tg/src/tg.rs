@@ -1,57 +1,21 @@
 use std::sync::Arc;
 
-use package_site::{Pkg, SearchResult};
 use pkgsite_lib::{PackagesSiteClient, SearchExactMatch};
 use teloxide::{
     Bot,
-    dispatching::{HandlerExt, UpdateFilterExt},
-    dptree,
     payloads::SendMessageSetters,
-    prelude::{Dispatcher, Requester, ResponseResult},
+    prelude::{Requester, ResponseResult},
     sugar::request::RequestLinkPreviewExt,
-    types::{Message, ParseMode, Update},
+    types::{Message, ParseMode},
     utils::command::BotCommands,
 };
 
-mod package_site;
+use crate::{
+    Cmd, not_found_pkg, not_match_pkg,
+    package_site::{Pkg, SearchResult},
+};
 
-#[derive(BotCommands, Clone, Debug)]
-#[command(
-    rename_rule = "lowercase",
-    description = "Bot supports the following commands:"
-)]
-enum Cmd {
-    Help,
-    #[command(description = "Get a package infomation (e,g: /pkg oma)")]
-    Pkg(String),
-    #[command(description = "Search packages (e,g: /search oma)")]
-    Search(String),
-}
-
-#[tokio::main]
-async fn main() {
-    dotenvy::dotenv().ok();
-    tracing_subscriber::fmt::init();
-    let bot = Bot::from_env();
-    let client = Arc::new(PackagesSiteClient::from_env());
-
-    let handler =
-        Update::filter_message().branch(dptree::entry().filter_command::<Cmd>().endpoint(
-            |bot: Bot, msg: Message, cmd: Cmd, client: Arc<PackagesSiteClient>| async move {
-                answer(bot, msg, cmd, client).await
-            },
-        ));
-
-    Dispatcher::builder(bot.clone(), handler)
-        // Pass the shared state to the handler as a dependency.
-        .dependencies(dptree::deps![client])
-        .enable_ctrlc_handler()
-        .build()
-        .dispatch()
-        .await;
-}
-
-async fn answer(
+pub async fn answer(
     bot: Bot,
     msg: Message,
     cmd: Cmd,
@@ -67,10 +31,10 @@ async fn answer(
             let pkg = match info.as_deref() {
                 Ok([pkg, ..]) => Pkg::from(pkg),
                 Ok([]) => {
-                    bot.send_message(msg.chat.id, format!("Package <b>{}</b> not found\n\nDidn't find what you need? <a href=\"https://github.com/AOSC-Dev/aosc-os-abbs/issues/new?title=pakreq%3A%20{}&body=URL%3A%20%0A%0ADescription%3A%20\">Request for the package</a>", arg, arg))
-                            .parse_mode(ParseMode::Html)
-                            .disable_link_preview(true)
-                            .await?;
+                    bot.send_message(msg.chat.id, not_found_pkg(&arg))
+                        .parse_mode(ParseMode::Html)
+                        .disable_link_preview(true)
+                        .await?;
                     return Ok(());
                 }
                 Err(e) => {
@@ -103,7 +67,7 @@ async fn answer(
             };
 
             if result.is_empty() {
-                bot.send_message(msg.chat.id, format!("No matching package for <b>{}</b>\n\nDidn't find what you need? <a href=\"https://github.com/AOSC-Dev/aosc-os-abbs/issues/new?title=pakreq%3A%20{}&body=URL%3A%20%0A%0ADescription%3A%20\">Request for the package</a>", arg, arg))
+                bot.send_message(msg.chat.id, not_match_pkg(&arg))
                     .parse_mode(ParseMode::Html)
                     .disable_link_preview(true)
                     .await?;
