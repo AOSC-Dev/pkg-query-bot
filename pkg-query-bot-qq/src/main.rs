@@ -37,7 +37,7 @@ async fn main() {
         .with_max_level(tracing::Level::DEBUG)
         .init();
 
-    let client = Arc::new(PackagesSiteClient::from_env());
+    let client = Arc::new(PackagesSiteClient::from_env().unwrap());
     let server = env::var("QQ_WS_SERVER").expect("QQ_WS_SERVER is not set");
 
     PSC.get_or_init(|| client.clone());

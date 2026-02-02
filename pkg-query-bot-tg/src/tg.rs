@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use pkgsite_lib::{PackagesSiteClient, SearchExactMatch};
+use pkgsite_lib::{PackagesSiteClient};
 use teloxide::{
     Bot,
     payloads::SendMessageSetters,
@@ -58,7 +58,7 @@ pub async fn answer(
 
             let search = client.search(&arg, true).await;
             let result = match search {
-                Ok(SearchExactMatch::Search(ref res)) => SearchResult::from(res),
+                Ok(Ok(res)) => SearchResult::from(res),
                 Err(e) => {
                     bot.send_message(msg.chat.id, e.to_string()).await?;
                     return Ok(());

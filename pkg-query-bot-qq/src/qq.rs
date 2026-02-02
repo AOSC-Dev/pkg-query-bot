@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use pkgsite_lib::SearchExactMatch;
 use runbot::event::SendMessage;
 use runbot::prelude::MessageProcessor;
 use runbot::prelude::Processor;
@@ -56,7 +55,7 @@ pub async fn search(
     let client = PSC.get().unwrap();
     let search = client.search(keyword, true).await;
     let result = match search {
-        Ok(SearchExactMatch::Search(ref res)) => SearchResult::from(res),
+        Ok(Ok(res)) => SearchResult::from(res),
         Err(e) => {
             send_message(bot_ctx, message, e.to_string()).await?;
             return Ok(false);

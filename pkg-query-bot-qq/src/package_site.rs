@@ -35,17 +35,17 @@ impl Display for Pkg<'_> {
     }
 }
 
-pub struct SearchResult<'a> {
-    inner: &'a Search,
+pub struct SearchResult {
+    inner: Search,
 }
 
-impl<'a> From<&'a Search> for SearchResult<'a> {
-    fn from(inner: &'a Search) -> Self {
+impl From<Search> for SearchResult {
+    fn from(inner: Search) -> Self {
         Self { inner }
     }
 }
 
-impl SearchResult<'_> {
+impl SearchResult {
     pub fn fmt_result(&self, search: &str, pacakge_site_url: &str) -> String {
         let mut s = String::new();
         s.push_str(&format!(

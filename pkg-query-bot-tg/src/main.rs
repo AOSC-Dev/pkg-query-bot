@@ -51,7 +51,7 @@ async fn main() {
     dotenvy::dotenv().ok();
     tracing_subscriber::fmt::init();
 
-    let client = Arc::new(PackagesSiteClient::from_env());
+    let client = Arc::new(PackagesSiteClient::from_env().unwrap());
 
     tg(client).await;
 }

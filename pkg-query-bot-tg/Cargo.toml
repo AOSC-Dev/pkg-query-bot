@@ -8,4 +8,4 @@ teloxide = { version = "0.17", features = ["macros"] }
 tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros"] }
 dotenvy = "0.15.7"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
-pkgsite-lib = { version = "0.6.2", git = "https://github.com/AOSC-Dev/pkgsite-tools", tag = "pkgsite-lib-v0.6.2"}
+pkgsite-lib = { version = "0.11.0", git = "https://github.com/AOSC-Dev/pkgsite-tools", tag = "pkgsite-lib-v0.11.0"}
