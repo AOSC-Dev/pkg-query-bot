@@ -33,7 +33,7 @@ pub async fn pkg(bot_ctx: Arc<BotContext>, message: &Message, pkg: &str) -> anyh
     let pkg = match info.as_deref() {
         Ok([pkg, ..]) => Pkg::from(pkg),
         Ok([]) => {
-            send_message(bot_ctx, message, not_found_pkg(&pkg)).await?;
+            send_message(bot_ctx, message, not_found_pkg(pkg)).await?;
             return Ok(true);
         }
         Err(e) => {
